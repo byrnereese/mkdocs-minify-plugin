@@ -1,1 +1,2 @@
-mkdocs==1.0.3
+mkdocs==1.0.4
+css-html-js-minify>=2.5.5
