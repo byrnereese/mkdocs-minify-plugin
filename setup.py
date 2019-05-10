@@ -1,19 +1,18 @@
 from setuptools import setup, find_packages
 
-
 setup(
     name='mkdocs-minify-plugin',
-    version='0.1.0',
-    description='A MkDocs plugin to minify page content prior to being written to disk',
+    version='0.2.0',
+    description='An MkDocs plugin to minify HTML and/or JS files prior to being written to disk',
     long_description='',
     keywords='mkdocs minify publishing documentation html css',
     url='https://github.com/byrnereese/mkdocs-minify-plugin',
-    author='Byrne Reese',
+    author='Byrne Reese, Lars Wilhelmer',
     author_email='byrne@majordojo.com',
     license='MIT',
     python_requires='>=2.7',
     install_requires=[
-        'mkdocs>=1.0.4','htmlmin>=0.1.4'
+        'mkdocs>=1.0.4','htmlmin>=0.1.4', 'jsmin>=2.2.2'
     ],
     classifiers=[
         'Development Status :: 4 - Beta',
