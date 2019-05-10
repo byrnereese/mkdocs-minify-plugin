@@ -33,9 +33,9 @@ class MinifyPlugin(BasePlugin):
     def on_files(self, files, config):
         if self.config['minify_js']:
             jsfiles = self.config['js_files'] or []
-            out = []
             if not isinstance(jsfiles, list):
                 jsfiles = [jsfiles]
+            out = []
             
             def isinjsfiles(name):
                 for jsfile in jsfiles:
@@ -82,4 +82,15 @@ class MinifyPlugin(BasePlugin):
                 docs_dir = docs_dir.replace(os.sep, '/')
             for jsfile in jsfiles:
                 os.remove(docs_dir + "/" + jsfile.replace('.js', '.min.js'))
+        return config
+
+    def on_pre_build(self, config):
+        if self.config['minify_js']:
+            # Change extra_javascript entries so they point to the minified files
+            jsfiles = self.config['js_files'] or []
+            if not isinstance(jsfiles, list):
+                jsfiles = [jsfiles]
+            for jsfile in jsfiles:
+                if jsfile in config['extra_javascript']:
+                    config['extra_javascript'][config['extra_javascript'].index(jsfile)] = jsfile.replace('.js', '.min.js')
         return config
