@@ -2,6 +2,10 @@
 
 An MkDocs plugin to minify HTML and/or JS files prior to being written to disk.
 
+HTML minification is done using [htmlmin](https://github.com/mankyd/htmlmin).
+
+JS minification is done using [jsmin](https://github.com/tikitu/jsmin/).
+
 ## Setup
 
 Install the plugin using pip:
