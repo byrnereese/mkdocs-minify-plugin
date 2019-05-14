@@ -30,56 +30,35 @@ class MinifyPlugin(BasePlugin):
         else:
             return output_content
 
-    def on_files(self, files, config):
+    def on_pre_build(self, config):
         if self.config['minify_js']:
             jsfiles = self.config['js_files'] or []
-            out = []
             if not isinstance(jsfiles, list):
-                jsfiles = [jsfiles]
-            
-            def isinjsfiles(name):
-                for jsfile in jsfiles:
-                    if fnmatch.fnmatchcase(name, jsfile):
-                        return True
-                return False
-            
-            for f in files:
-                name = f.src_path
-                docs_dir = config['docs_dir']
-                # Windows reports filenames as eg. a\\b\\c instead of a/b/c
-                if os.sep != '/':
-                    name = name.replace(os.sep, '/')
-                    docs_dir = docs_dir.replace(os.sep, '/')
-                if isinjsfiles(name):
-                    input_filename = docs_dir + '/' + name
-                    output_filename = input_filename.replace('.js','.min.js')
-                    minified = ''
-                    # Read input file and minify
-                    with open(input_filename) as inputfile:
-                        minified = jsmin(inputfile.read())
-                    # Write minified output file
-                    with open(output_filename, 'w') as outputfile:
-                        outputfile.write(minified)
-                    # Adapt file object properties 
-                    f.src_path = f.src_path.replace('.js', '.min.js')
-                    f.abs_src_path = f.abs_src_path.replace('.js', '.min.js')
-                    f.dest_path = f.dest_path.replace('.js', '.min.js')
-                    f.abs_dest_path = f.abs_dest_path.replace('.js', '.min.js')
-                    f.url = f.url.replace('.js', '.min.js')
-                out.append(f)
-            return mkdocs.structure.files.Files(out)
-        else:
-            return files
+                jsfiles = [jsfiles]                                        
+            for jsfile in jsfiles:
+                # Change extra_javascript entries so they point to the minified files
+                if jsfile in config['extra_javascript']:
+                    config['extra_javascript'][config['extra_javascript'].index(jsfile)] = jsfile.replace('.js', '.min.js')
+        return config
     
     def on_post_build(self, config):
         if self.config['minify_js']:
-            # Remove minified files from docs_dir
             jsfiles = self.config['js_files'] or []
             if not isinstance(jsfiles, list):
-                jsfiles = [jsfiles]
-            docs_dir = config['docs_dir']
-            if os.sep != '/':
-                docs_dir = docs_dir.replace(os.sep, '/')
+                jsfiles = [jsfiles]                                        
             for jsfile in jsfiles:
-                os.remove(docs_dir + "/" + jsfile.replace('.js', '.min.js'))
+                # Minify
+                input_filename = config['site_dir'] + '/' + jsfile
+                if os.sep != '/':
+                    input_filename = input_filename.replace(os.sep, '/')
+                output_filename = input_filename.replace('.js','.min.js')
+                minified = ''
+                # Read original file and minify
+                with open(input_filename) as inputfile:
+                    minified = jsmin(inputfile.read())
+                # Write minified output file
+                with open(output_filename, 'w') as outputfile:
+                    outputfile.write(minified)
+                # Delete original file
+                os.remove(input_filename)
         return config
