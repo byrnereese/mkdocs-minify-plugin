@@ -30,9 +30,9 @@ class MinifyPlugin(BasePlugin):
             opts = self.config['htmlmin_opts'] or {}
             for key in opts:
                 if key not in ['remove_comments','remove_empty_space','remove_all_empty_space','reduce_boolean_attributes','remove_optional_attribute_quotes','conver_charrefs','keep_pre','pre_tags','pre_attr']:
-                    print "htmlmin option " + key + " not recognized"
+                    print("htmlmin option " + key + " not recognized")
                 else:
-                    print "htmlmin option found: " , key , " -> " , opts[key]
+                    print("htmlmin option found: " , key , " -> " , opts[key])
             return minify(output_content, opts)
         else:
             return output_content
