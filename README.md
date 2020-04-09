@@ -19,6 +19,8 @@ plugins:
   - minify:
       minify_html: true
       minify_js: true
+      htmlmin_opts:
+          remove_comments: true
       js_files:
           - my/javascript/dir/file1.js
           - my/javascript/dir/file2.js
@@ -29,6 +31,7 @@ plugins:
 ## Options
 
 - `minify_html`: Sets whether HTML files should be minified. Defaults to `false`.
+- `htmlmin_opts`: Sets runtime htmlmin API options using the [config parameters of htmlmin](https://htmlmin.readthedocs.io/en/latest/reference.html#main-functions)
 - `minify_js`: Sets whether JS files should be minified. Defaults to `false`. If set to `true`, you must specificy the JS to be minified files using `js_files` (see below).
 - `js_files`: List of JS files to be minified. The plugin will generate minified versions of these files and save them as `.min.js` in the output directory.
 

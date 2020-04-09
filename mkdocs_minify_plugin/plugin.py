@@ -16,6 +16,7 @@ class MinifyPlugin(BasePlugin):
 
     config_scheme = (
         ('minify_html', mkdocs.config.config_options.Type(bool, default=False)),
+        ('htmlmin_opts', mkdocs.config.config_options.Type((str, dict), default=None)),
         ('minify_js', mkdocs.config.config_options.Type(bool, default=False)),
         ('js_files', mkdocs.config.config_options.Type((str, list), default=None))
     )
@@ -26,7 +27,11 @@ class MinifyPlugin(BasePlugin):
 
     def on_post_page(self, output_content, page, config):
         if self.config['minify_html']:
-            return minify(output_content)
+            opts = self.config['htmlmin_opts'] or {}
+            for key in opts:
+                if key not in ['remove_comments','remove_empty_space','remove_all_empty_space','reduce_boolean_attributes','remove_optional_attribute_quotes','conver_charrefs','keep_pre','pre_tags','pre_attr']:
+                    print("htmlmin option " + key + " not recognized")
+            return minify(output_content, opts)
         else:
             return output_content
 
