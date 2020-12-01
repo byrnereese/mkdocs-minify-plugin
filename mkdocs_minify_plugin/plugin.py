@@ -21,10 +21,6 @@ class MinifyPlugin(BasePlugin):
         ('js_files', mkdocs.config.config_options.Type((str, list), default=None))
     )
 
-    def __init__(self):
-        self.enabled = True
-        self.total_time = 0
-
     def on_post_page(self, output_content, page, config):
         if self.config['minify_html']:
             opts = self.config['htmlmin_opts'] or {}
@@ -39,31 +35,40 @@ class MinifyPlugin(BasePlugin):
         if self.config['minify_js']:
             jsfiles = self.config['js_files'] or []
             if not isinstance(jsfiles, list):
-                jsfiles = [jsfiles]                                        
+                jsfiles = [jsfiles]
             for jsfile in jsfiles:
                 # Change extra_javascript entries so they point to the minified files
                 if jsfile in config['extra_javascript']:
                     config['extra_javascript'][config['extra_javascript'].index(jsfile)] = jsfile.replace('.js', '.min.js')
         return config
-    
+
     def on_post_build(self, config):
+        if self.config['minify_html']:
+            # Minify 404 page manually
+            opts = self.config['htmlmin_opts'] or {}
+            fn = config['site_dir'] + '/404.html'
+            if os.sep != '/':
+                fn = fn.replace(os.sep, '/')
+            with open(fn, mode="r+", encoding="utf-8") as f:
+                minified = minify(f.read(), opts.get("remove_comments", False), opts.get("remove_empty_space", False), opts.get("remove_all_empty_space", False), opts.get("reduce_empty_attributes", True), opts.get("reduce_boolean_attributes", False), opts.get("remove_optional_attribute_quotes", True), opts.get("convert_charrefs", True), opts.get("keep_pre", False), opts.get("pre_tags", ('pre', 'textarea')), opts.get("pre_tags", 'pre'))
+                f.seek(0)
+                f.write(minified)
+                f.truncate()
+
         if self.config['minify_js']:
             jsfiles = self.config['js_files'] or []
             if not isinstance(jsfiles, list):
-                jsfiles = [jsfiles]                                        
+                jsfiles = [jsfiles]
             for jsfile in jsfiles:
-                # Minify
-                input_filename = config['site_dir'] + '/' + jsfile
+                # Read JS file and minify
+                fn = config['site_dir'] + '/' + jsfile
                 if os.sep != '/':
-                    input_filename = input_filename.replace(os.sep, '/')
-                output_filename = input_filename.replace('.js','.min.js')
-                minified = ''
-                # Read original file and minify
-                with open(input_filename) as inputfile:
-                    minified = jsmin(inputfile.read())
-                # Write minified output file
-                with open(output_filename, 'w') as outputfile:
-                    outputfile.write(minified)
-                # Delete original file
-                os.remove(input_filename)
+                    fn = fn.replace(os.sep, '/')
+                with open(fn, mode="r+", encoding="utf-8") as f:
+                    minified = jsmin(f.read())
+                    f.seek(0)
+                    f.write(minified)
+                    f.truncate()
+                # Rename to .min.js
+                os.rename(fn, fn.replace('.js','.min.js'))
         return config
