@@ -32,8 +32,11 @@ class MinifyPlugin(BasePlugin):
             return output_content
 
     def on_post_template(self, output_content, template_name, config):
-        # Also minify template files, e.g., 404.html
-        return self.on_post_page(output_content, {}, config)
+        # Minify HTML template files, e.g., 404.html
+        if template_name.endswith(".html"):
+            return self.on_post_page(output_content, {}, config)
+        else:
+            return output_content
 
     def on_pre_build(self, config):
         if self.config['minify_js']:
