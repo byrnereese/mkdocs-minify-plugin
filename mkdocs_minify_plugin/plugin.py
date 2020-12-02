@@ -31,6 +31,10 @@ class MinifyPlugin(BasePlugin):
         else:
             return output_content
 
+    def on_post_template(self, output_content, template_name, config):
+        # Also minify template files, e.g., 404.html
+        return self.on_post_page(output_content, {}, config)
+
     def on_pre_build(self, config):
         if self.config['minify_js']:
             jsfiles = self.config['js_files'] or []
@@ -43,18 +47,6 @@ class MinifyPlugin(BasePlugin):
         return config
 
     def on_post_build(self, config):
-        if self.config['minify_html']:
-            # Minify 404 page manually
-            opts = self.config['htmlmin_opts'] or {}
-            fn = config['site_dir'] + '/404.html'
-            if os.sep != '/':
-                fn = fn.replace(os.sep, '/')
-            with open(fn, mode="r+", encoding="utf-8") as f:
-                minified = minify(f.read(), opts.get("remove_comments", False), opts.get("remove_empty_space", False), opts.get("remove_all_empty_space", False), opts.get("reduce_empty_attributes", True), opts.get("reduce_boolean_attributes", False), opts.get("remove_optional_attribute_quotes", True), opts.get("convert_charrefs", True), opts.get("keep_pre", False), opts.get("pre_tags", ('pre', 'textarea')), opts.get("pre_tags", 'pre'))
-                f.seek(0)
-                f.write(minified)
-                f.truncate()
-
         if self.config['minify_js']:
             jsfiles = self.config['js_files'] or []
             if not isinstance(jsfiles, list):
