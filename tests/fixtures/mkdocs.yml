@@ -1,0 +1,14 @@
+site_name: My Docs
+
+plugins:
+  - search
+  - minify:
+      minify_html: true
+      minify_js: true
+      minify_css: true
+      htmlmin_opts:
+          remove_comments: true
+      js_files:
+          - extra_assets/js/script.js
+      css_files:
+          - extra_assets/css/style.css

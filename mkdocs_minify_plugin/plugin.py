@@ -9,17 +9,66 @@ from mkdocs.config import config_options, Config
 from mkdocs.plugins import BasePlugin
 import mkdocs.structure.files
 
-from jsmin import jsmin
+import csscompressor
+import jsmin
 from htmlmin import minify
+
+
+EXTRAS = {
+    "js": "extra_javascript",
+    "css": "extra_css",
+}
+MINIFIERS = {
+    "js": jsmin.jsmin,
+    "css": csscompressor.compress
+}
+
+
+def _minified_asset(file_name, file_type):
+    return file_name.replace('.' + file_type, '.min.' + file_type)
+
 
 class MinifyPlugin(BasePlugin):
 
     config_scheme = (
         ('minify_html', mkdocs.config.config_options.Type(bool, default=False)),
-        ('htmlmin_opts', mkdocs.config.config_options.Type((str, dict), default=None)),
         ('minify_js', mkdocs.config.config_options.Type(bool, default=False)),
-        ('js_files', mkdocs.config.config_options.Type((str, list), default=None))
+        ('minify_css', mkdocs.config.config_options.Type(bool, default=False)),
+        ('js_files', mkdocs.config.config_options.Type((str, list), default=None)),
+        ('css_files', mkdocs.config.config_options.Type((str, list), default=None)),
+        ('htmlmin_opts', mkdocs.config.config_options.Type((str, dict), default=None)),
     )
+
+    def _minify(self, file_type, config):
+        minify_func = MINIFIERS[file_type]
+        files = self.config[file_type + '_files'] or []
+
+        if not isinstance(files, list):
+            files = [files]
+        for file in files:
+            # Read file and minify
+            fn = config['site_dir'] + '/' + file
+            if os.sep != '/':
+                fn = fn.replace(os.sep, '/')
+            with open(fn, mode="r+", encoding="utf-8") as f:
+                minified = minify_func(f.read())
+                f.seek(0)
+                f.write(minified)
+                f.truncate()
+            # Rename to .min.{file_type}
+            os.rename(fn, _minified_asset(fn, file_type))
+
+    def _minify_extra_config(self, file_type, config):
+        """Change extra_ entries so they point to the minified files."""
+        files = self.config[file_type + '_files'] or []
+        extra = EXTRAS[file_type]
+
+        if not isinstance(files, list):
+            files = [files]
+        for file in files:
+            if file in config[extra]:
+                config[extra][config[extra].index(file)] = _minified_asset(file, file_type)
+        return config
 
     def on_post_page(self, output_content, page, config):
         if self.config['minify_html']:
@@ -40,30 +89,14 @@ class MinifyPlugin(BasePlugin):
 
     def on_pre_build(self, config):
         if self.config['minify_js']:
-            jsfiles = self.config['js_files'] or []
-            if not isinstance(jsfiles, list):
-                jsfiles = [jsfiles]
-            for jsfile in jsfiles:
-                # Change extra_javascript entries so they point to the minified files
-                if jsfile in config['extra_javascript']:
-                    config['extra_javascript'][config['extra_javascript'].index(jsfile)] = jsfile.replace('.js', '.min.js')
+            config = self._minify_extra_config('js', config)
+        if self.config['minify_css']:
+            config = self._minify_extra_config('css', config)
         return config
 
     def on_post_build(self, config):
         if self.config['minify_js']:
-            jsfiles = self.config['js_files'] or []
-            if not isinstance(jsfiles, list):
-                jsfiles = [jsfiles]
-            for jsfile in jsfiles:
-                # Read JS file and minify
-                fn = config['site_dir'] + '/' + jsfile
-                if os.sep != '/':
-                    fn = fn.replace(os.sep, '/')
-                with open(fn, mode="r+", encoding="utf-8") as f:
-                    minified = jsmin(f.read())
-                    f.seek(0)
-                    f.write(minified)
-                    f.truncate()
-                # Rename to .min.js
-                os.rename(fn, fn.replace('.js','.min.js'))
+            self._minify('js', config)
+        if self.config['minify_css']:
+            self._minify('css', config)
         return config
