@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="mkdocs-minify-plugin",
-    version="0.5.0",
+    version="0.5.1",
     description="An MkDocs plugin to minify HTML, JS or CSS files prior to being written to disk",
     long_description="",
     keywords="mkdocs minify publishing documentation html css",
@@ -10,11 +10,11 @@ setup(
     author="Byrne Reese, Lars Wilhelmer",
     author_email="byrne@majordojo.com",
     license="MIT",
-    python_requires=">=3.0",
+    python_requires=">=3.7",
     install_requires=[
-        "mkdocs>=1.0.4",
-        "htmlmin>=0.1.4",
-        "jsmin>=3.0.0",
+        "mkdocs>=1.4.1",
+        "htmlmin>=0.1.12",
+        "jsmin>=3.0.1",
         "csscompressor>=0.9.5",
     ],
     classifiers=[
@@ -24,10 +24,10 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3 :: Only",
-        "Programming Language :: Python :: 3.4",
-        "Programming Language :: Python :: 3.5",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
     ],
     packages=find_packages(),
     entry_points={
