@@ -25,6 +25,7 @@ plugins:
       minify_css: true
       htmlmin_opts:
           remove_comments: true
+      cache_safe_extras: true
       js_files:
           - my/javascript/dir/file1.js
           - my/javascript/dir/file2.js
@@ -51,6 +52,10 @@ plugins:
 - `htmlmin_opts`: 
   - Defaults to `None`.
   - Sets runtime htmlmin API options using the [config parameters of htmlmin](https://htmlmin.readthedocs.io/en/latest/reference.html#main-functions)
+- `cache_safe_extras`:
+  - Defaults to `False`.
+  - Sets whether a hash should be added to the extra JS and CSS file names.  
+    If set to `True`, you must specificy the files using `css_files` or `js_files` (see below).
 - `js_files`: 
   - Defaults to `None`.
   - List of JS files to be minified.  
