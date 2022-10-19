@@ -1,5 +1,8 @@
-import distutils.dir_util
+"""
+Pytest test file for the `mkdocs_minify_plugin` module.
+"""
 import hashlib
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -7,39 +10,46 @@ import pytest
 
 
 @pytest.fixture
-def extra_dir(tmp_path):
+def extra_dir(tmp_path: Path) -> Path:
+    """Fixture that provides the path to the extra_assets directory after build"""
     return tmp_path / "site" / "extra_assets"
 
 
 @pytest.fixture
-def mkdocs_build(tmp_path):
+def mkdocs_build(tmp_path: Path) -> int:
+    """Fixture that builds mkDocs based on the `mkdocs.yml` file"""
     return _build_fixture_base(tmp_path, file_name="mkdocs.yml")
 
 
 @pytest.fixture
-def mkdocs_build_with_extras(tmp_path):
+def mkdocs_build_with_extras(tmp_path: Path) -> int:
+    """Fixture that builds mkDocs based on the `mkdocs_with_extras.yml` file"""
     return _build_fixture_base(tmp_path, file_name="mkdocs_with_extras.yml")
 
 
 @pytest.fixture
-def mkdocs_build_cache_safe(tmp_path):
+def mkdocs_build_cache_safe(tmp_path: Path) -> int:
+    """Fixture that builds mkDocs based on the `mkdocs_cache_safe.yml` file"""
     return _build_fixture_base(tmp_path, file_name="mkdocs_cache_safe.yml")
 
 
 @pytest.fixture
-def mkdocs_build_cache_safe_minified(tmp_path):
+def mkdocs_build_cache_safe_minified(tmp_path: Path) -> int:
+    """Fixture that builds mkDocs based on the `mkdocs_cache_safe_minified.yml` file"""
     return _build_fixture_base(tmp_path, file_name="mkdocs_cache_safe_minified.yml")
 
 
-def _build_fixture_base(tmp_path, *, file_name):
-    fixture_dir = str(Path(__file__).parent / "fixtures")
-    temp_dir = str(tmp_path)
+def _build_fixture_base(tmp_path: Path, *, file_name: str) -> int:
+    """Base function that handles fixture content creation"""
+    fixture_dir: str = str(Path(__file__).parent / "fixtures")
+    temp_dir: str = str(tmp_path)
 
-    distutils.dir_util.copy_tree(fixture_dir, temp_dir)
+    shutil.copytree(fixture_dir, temp_dir, dirs_exist_ok=True)
     return subprocess.check_call(["mkdocs", "build", "-f", Path(temp_dir) / file_name])
 
 
-def test_build_no_extras(mkdocs_build, extra_dir, tmp_path):
+def test_build_no_extras(mkdocs_build: int, extra_dir: Path, tmp_path: Path) -> None:
+    """Tests that the extra files are minified but, aren't added to the .html files"""
     _assert_minified_css(extra_dir / "css" / "style.min.css")
     _assert_minified_js(extra_dir / "js" / "script.min.js")
     _assert_minified_template_no_extras(
@@ -52,7 +62,8 @@ def test_build_no_extras(mkdocs_build, extra_dir, tmp_path):
     )
 
 
-def test_build_with_extras(mkdocs_build_with_extras, extra_dir, tmp_path):
+def test_build_with_extras(mkdocs_build_with_extras: int, extra_dir: Path, tmp_path: Path) -> None:
+    """Tests that the extra files are minified and are added to the .html files"""
     _assert_minified_css(extra_dir / "css" / "style.min.css")
     _assert_minified_js(extra_dir / "js" / "script.min.js")
     _assert_template_with_extras(
@@ -65,20 +76,21 @@ def test_build_with_extras(mkdocs_build_with_extras, extra_dir, tmp_path):
     )
 
 
-def test_build_cache_safe(mkdocs_build_cache_safe, extra_dir, tmp_path):
-    css_hash_prefix = "style.885f1a"
-    js_hash_prefix = "script.275b9a"
+def test_build_cache_safe(mkdocs_build_cache_safe: int, extra_dir: Path, tmp_path: Path) -> None:
+    """Tests that the extra files aren't minified and are added to the .html files with a hashed name."""
+    css_hash_prefix: str = "style.885f1a"
+    js_hash_prefix: str = "script.275b9a"
 
-    with open(extra_dir / "css" / f"{css_hash_prefix}.css") as f:
-        css_data = f.read()
+    with open(extra_dir / "css" / f"{css_hash_prefix}.css", encoding="utf8") as file:
+        css_data: str = file.read()
 
     assert (
         hashlib.sha384(css_data.encode("utf8")).hexdigest()
         == "885f1a3f199708ad6f4d170707080d0066bee0bc4a58d8fee73679c6f6880c52b6885eae5fb6c2b9b337d25b339aaf52"
     )
 
-    with open(extra_dir / "js" / f"{js_hash_prefix}.js") as f:
-        js_data = f.read()
+    with open(extra_dir / "js" / f"{js_hash_prefix}.js", encoding="utf8") as file:
+        js_data: str = file.read()
 
     assert (
         hashlib.sha384(js_data.encode("utf8")).hexdigest()
@@ -90,20 +102,25 @@ def test_build_cache_safe(mkdocs_build_cache_safe, extra_dir, tmp_path):
         css_prefix=css_hash_prefix,
         js_prefix=js_hash_prefix,
         file_hash="315459f1b231791738d6a2be955a469a06a94b9135a776c42cc03250b1b1f3cf9ac0232d9ae34ff7709bf37fa64af558",
-        minified=False,
+        minified_extras=False,
+        minified_html=False,
     )
     _assert_template_with_extras(
         file_path=tmp_path / "site" / "404.html",
         css_prefix=css_hash_prefix,
         js_prefix=js_hash_prefix,
         file_hash="10e73a27d3d134aff777399fb8cb2c044d1108f2b91457b7a84026c9afd23e16719eca9f922f977c33f34dcb69017227",
-        minified=False,
+        minified_extras=False,
+        minified_html=False,
     )
 
 
-def test_build_cache_safe_minified(mkdocs_build_cache_safe_minified, extra_dir, tmp_path):
-    css_hash_prefix = "style.54ca0a"
-    js_hash_prefix = "script.fda10b"
+def test_build_cache_safe_minified(
+    mkdocs_build_cache_safe_minified: int, extra_dir: Path, tmp_path: Path
+) -> None:
+    """Tests that the extra files are minified and are added to the .html files with a hashed name."""
+    css_hash_prefix: str = "style.54ca0a"
+    js_hash_prefix: str = "script.fda10b"
 
     _assert_minified_css(extra_dir / "css" / f"{css_hash_prefix}.min.css")
     _assert_minified_js(extra_dir / "js" / f"{js_hash_prefix}.min.js")
@@ -121,9 +138,10 @@ def test_build_cache_safe_minified(mkdocs_build_cache_safe_minified, extra_dir, 
     )
 
 
-def _assert_minified_css(file_path):
-    with open(file_path) as f:
-        minified = f.read()
+def _assert_minified_css(file_path: Path) -> None:
+    """Asserts the contents of the minified css file and compares the checksum hash"""
+    with open(file_path, encoding="utf8") as file:
+        minified: str = file.read()
 
     assert minified == r".ui-hidden{display:none}"
     assert (
@@ -132,9 +150,10 @@ def _assert_minified_css(file_path):
     )
 
 
-def _assert_minified_js(file_path):
-    with open(file_path) as f:
-        minified = f.read()
+def _assert_minified_js(file_path: Path) -> None:
+    """Asserts the contents of the minified js file and compares the checksum hash"""
+    with open(file_path, encoding="utf8") as file:
+        minified: str = file.read()
 
     assert minified == r"console.log('Hello World');"
     assert (
@@ -144,10 +163,11 @@ def _assert_minified_js(file_path):
 
 
 def _assert_minified_template_no_extras(
-    *, file_path, css_prefix="style", js_prefix="script", file_hash
-):
-    with open(file_path) as f:
-        minified = f.read()
+    *, file_path: Path, css_prefix: str = "style", js_prefix: str = "script", file_hash: str
+) -> None:
+    """Asserts that the extra files aren't added to the .html files and compares the checksum hash"""
+    with open(file_path, encoding="utf8") as file:
+        minified: str = file.read()
 
     assert f"extra_assets/js/{js_prefix}.js" not in minified
     assert f"extra_assets/css/{css_prefix}.css" not in minified
@@ -157,19 +177,28 @@ def _assert_minified_template_no_extras(
 
 
 def _assert_template_with_extras(
-    *, file_path, css_prefix="style", js_prefix="script", file_hash, minified=True
-):
-    with open(file_path) as f:
-        file_data = f.read()
+    *,
+    file_path: Path,
+    css_prefix: str = "style",
+    js_prefix: str = "script",
+    file_hash: str,
+    minified_extras: bool = True,
+    minified_html: bool = True,
+) -> None:
+    """Asserts that the extra files are added to the .html files and compares the checksum hash"""
+    with open(file_path, encoding="utf8") as file:
+        file_data: str = file.read()
 
-    if minified:
+    if not minified_html:
+        # remove timestamp comment for constant hash
+        file_data = "\n".join(file_data.splitlines()[:-6])
+
+    if minified_extras:
         assert f"extra_assets/js/{js_prefix}.js" not in file_data
         assert f"extra_assets/css/{css_prefix}.css" not in file_data
         assert f"extra_assets/js/{js_prefix}.min.js" in file_data
         assert f"extra_assets/css/{css_prefix}.min.css" in file_data
     else:
-        # remove timestamp comment for constant hash
-        file_data = "\n".join(file_data.splitlines()[:-6])
         assert f"extra_assets/js/{js_prefix}.js" in file_data
         assert f"extra_assets/css/{css_prefix}.css" in file_data
         assert f"extra_assets/js/{js_prefix}.min.js" not in file_data
