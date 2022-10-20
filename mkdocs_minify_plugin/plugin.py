@@ -1,27 +1,20 @@
 import hashlib
 import os
-import sys
-import fnmatch
-from timeit import default_timer as timer
-from datetime import datetime, timedelta
-
-from mkdocs import utils as mkdocs_utils
-from mkdocs.config import config_options, Config
-from mkdocs.plugins import BasePlugin
-import mkdocs.structure.files
 
 import csscompressor
+import htmlmin
 import jsmin
-from htmlmin import minify
-
+import mkdocs.config.config_options
+from mkdocs.plugins import BasePlugin
 
 EXTRAS = {
     "js": "extra_javascript",
     "css": "extra_css",
 }
+
 MINIFIERS = {
     "js": jsmin.jsmin,
-    "css": csscompressor.compress
+    "css": csscompressor.compress,
 }
 
 
@@ -35,13 +28,13 @@ def _minified_asset(minify_flag, file_name, file_type, file_hash):
 class MinifyPlugin(BasePlugin):
 
     config_scheme = (
-        ('minify_html', mkdocs.config.config_options.Type(bool, default=False)),
-        ('minify_js', mkdocs.config.config_options.Type(bool, default=False)),
-        ('minify_css', mkdocs.config.config_options.Type(bool, default=False)),
-        ('js_files', mkdocs.config.config_options.Type((str, list), default=None)),
-        ('css_files', mkdocs.config.config_options.Type((str, list), default=None)),
-        ('htmlmin_opts', mkdocs.config.config_options.Type((str, dict), default=None)),
-        ('cache_safe', mkdocs.config.config_options.Type(bool, default=False)),
+        ("minify_html", mkdocs.config.config_options.Type(bool, default=False)),
+        ("minify_js", mkdocs.config.config_options.Type(bool, default=False)),
+        ("minify_css", mkdocs.config.config_options.Type(bool, default=False)),
+        ("js_files", mkdocs.config.config_options.Type((str, list), default=None)),
+        ("css_files", mkdocs.config.config_options.Type((str, list), default=None)),
+        ("htmlmin_opts", mkdocs.config.config_options.Type((str, dict), default=None)),
+        ("cache_safe", mkdocs.config.config_options.Type(bool, default=False)),
     )
 
     path_to_hash = {}
@@ -58,7 +51,7 @@ class MinifyPlugin(BasePlugin):
 
     def _minify(self, file_type, config):
         minify_func = MINIFIERS[file_type]
-        files = self.config[file_type + '_files'] or []
+        files = self.config[file_type + "_files"] or []
         minify_flag = self.config[f"minify_{file_type}"]
 
         if not isinstance(files, list):
@@ -82,7 +75,7 @@ class MinifyPlugin(BasePlugin):
 
     def _minify_extra_config(self, file_type, config):
         """Changes extra_ entries, so they point to the minified/hashed file names."""
-        files = self.config[file_type + '_files'] or []
+        files = self.config[file_type + "_files"] or []
         extra = EXTRAS[file_type]
         minify_func = MINIFIERS[file_type]
         minify_flag = self.config[f"minify_{file_type}"]
@@ -112,16 +105,40 @@ class MinifyPlugin(BasePlugin):
                     # store hash for use in `on_post_build`
                     self.path_to_hash[file] = file_hash
 
-                config[extra][config[extra].index(file)] = _minified_asset(minify_flag, file, file_type, file_hash)
+                config[extra][config[extra].index(file)] = _minified_asset(
+                    minify_flag, file, file_type, file_hash
+                )
         return config
 
     def on_post_page(self, output_content, page, config):
-        if self.config['minify_html']:
-            opts = self.config['htmlmin_opts'] or {}
+        if self.config["minify_html"]:
+            opts = self.config["htmlmin_opts"] or {}
             for key in opts:
-                if key not in ['remove_comments','remove_empty_space','remove_all_empty_space','reduce_boolean_attributes','remove_optional_attribute_quotes','convert_charrefs','keep_pre','pre_tags','pre_attr']:
+                if key not in [
+                    "remove_comments",
+                    "remove_empty_space",
+                    "remove_all_empty_space",
+                    "reduce_boolean_attributes",
+                    "remove_optional_attribute_quotes",
+                    "convert_charrefs",
+                    "keep_pre",
+                    "pre_tags",
+                    "pre_attr",
+                ]:
                     print("htmlmin option " + key + " not recognized")
-            return minify(output_content, opts.get("remove_comments", False), opts.get("remove_empty_space", False), opts.get("remove_all_empty_space", False), opts.get("reduce_empty_attributes", True), opts.get("reduce_boolean_attributes", False), opts.get("remove_optional_attribute_quotes", True), opts.get("convert_charrefs", True), opts.get("keep_pre", False), opts.get("pre_tags", ('pre', 'textarea')), opts.get("pre_attr", 'pre'))
+            return htmlmin.minify(
+                output_content,
+                opts.get("remove_comments", False),
+                opts.get("remove_empty_space", False),
+                opts.get("remove_all_empty_space", False),
+                opts.get("reduce_empty_attributes", True),
+                opts.get("reduce_boolean_attributes", False),
+                opts.get("remove_optional_attribute_quotes", True),
+                opts.get("convert_charrefs", True),
+                opts.get("keep_pre", False),
+                opts.get("pre_tags", ("pre", "textarea")),
+                opts.get("pre_attr", "pre"),
+            )
         else:
             return output_content
 
@@ -133,15 +150,15 @@ class MinifyPlugin(BasePlugin):
             return output_content
 
     def on_pre_build(self, config):
-        if self.config['minify_js'] or self.config["cache_safe"]:
-            config = self._minify_extra_config('js', config)
-        if self.config['minify_css'] or self.config["cache_safe"]:
-            config = self._minify_extra_config('css', config)
+        if self.config["minify_js"] or self.config["cache_safe"]:
+            config = self._minify_extra_config("js", config)
+        if self.config["minify_css"] or self.config["cache_safe"]:
+            config = self._minify_extra_config("css", config)
         return config
 
     def on_post_build(self, config):
-        if self.config['minify_js'] or self.config["cache_safe"]:
-            self._minify('js', config)
-        if self.config['minify_css'] or self.config["cache_safe"]:
-            self._minify('css', config)
+        if self.config["minify_js"] or self.config["cache_safe"]:
+            self._minify("js", config)
+        if self.config["minify_css"] or self.config["cache_safe"]:
+            self._minify("css", config)
         return config
