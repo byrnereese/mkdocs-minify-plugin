@@ -1,5 +1,5 @@
 """
-A MkDocs plugin to minify HTML, JS or CSS files prior to being written to disk
+An MkDocs plugin to minify HTML, JS or CSS files prior to being written to disk
 """
 import hashlib
 import os

@@ -1,6 +1,6 @@
 # mkdocs-minify-plugin
 
-A MkDocs plugin to minify HTML, JS or CSS files prior to being written to disk.
+An MkDocs plugin to minify HTML, JS or CSS files prior to being written to disk.
 
 HTML minification is done using [htmlmin](https://github.com/mankyd/htmlmin).
 
@@ -56,6 +56,8 @@ plugins:
   - Defaults to `False`.
   - Sets whether a hash should be added to the JS and CSS file names.  
     If set to `True`, you must specificy the files using `js_files` or `css_files` (see below).
+  - This setting makes sure that the users will download the up-to-date version of the files between MkDocs builds 
+    instead of loading old versions from the browser cache.
 - `js_files`: 
   - Defaults to `None`.
   - List of JS files to be minified.  
