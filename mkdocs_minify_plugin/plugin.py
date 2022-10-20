@@ -1,6 +1,6 @@
 import hashlib
 import os
-from typing import Dict, Optional, Tuple, Union
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import csscompressor
 import htmlmin
@@ -52,29 +52,33 @@ class MinifyPlugin(BasePlugin):
     Relevant only when `on_pre_build` is run AND `cache_safe` is `True`.
     """
 
-    def _minify(self, file_type, config):
-        minify_func = MINIFIERS[file_type]
-        files = self.config[file_type + "_files"] or []
-        minify_flag = self.config[f"minify_{file_type}"]
+    def _minify(self, file_type: str, config: MkDocsConfig) -> None:
+        """Process extras and save them to disk."""
+        minify_func: Callable = MINIFIERS[file_type]
+        file_paths: Union[str, List[str]] = self.config[f"{file_type}_files"] or []
+        minify_flag: bool = self.config[f"minify_{file_type}"]
 
-        if not isinstance(files, list):
-            files = [files]
-        for file in files:
-            # Read file and minify
-            fn = f"{config['site_dir']}/{file}".replace("\\", "/")
-            with open(fn, mode="r+", encoding="utf-8") as f:
+        if not isinstance(file_paths, list):
+            file_paths = [file_paths]
+
+        for file_path in file_paths:
+            site_file_path: str = f"{config['site_dir']}/{file_path}".replace("\\", "/")
+
+            with open(site_file_path, mode="r+", encoding="utf8") as file:
                 if self.config["cache_safe"]:
-                    f.write(self.path_to_data[file])
+                    file.write(self.path_to_data[file_path])
                 else:
-                    minified = minify_func(f.read())
-                    f.seek(0)
-                    f.write(minified)
-                f.truncate()
+                    minified: str = minify_func(file.read())
+                    file.seek(0)
+                    file.write(minified)
+                file.truncate()
 
-            file_hash = self.path_to_hash.get(file, "")
+            file_hash: str = self.path_to_hash.get(file_path, "")
 
             # Rename to [.hash].min.{file_type}
-            os.rename(fn, _minified_asset(minify_flag, fn, file_type, file_hash))
+            os.rename(
+                site_file_path, _minified_asset(minify_flag, site_file_path, file_type, file_hash)
+            )
 
     def _minify_html_page(self, output: str) -> Optional[str]:
         """Minifies html page content."""
@@ -104,42 +108,41 @@ class MinifyPlugin(BasePlugin):
 
         return htmlmin.minify(output, **output_opts)
 
-    def _minify_extra_config(self, file_type, config):
-        """Changes extra_ entries, so they point to the minified/hashed file names."""
-        files = self.config[file_type + "_files"] or []
-        extra = EXTRAS[file_type]
-        minify_func = MINIFIERS[file_type]
-        minify_flag = self.config[f"minify_{file_type}"]
+    def _minify_extra_config(self, file_type: str, config: MkDocsConfig) -> None:
+        """Change extra_ entries, so they point to the minified/hashed file names."""
+        files_to_minify: Union[str, List[str]] = self.config[f"{file_type}_files"] or []
+        minify_func: Callable = MINIFIERS[file_type]
+        minify_flag: bool = self.config[f"minify_{file_type}"]
+        extra: str = EXTRAS[file_type]
 
-        if not isinstance(files, list):
-            files = [files]
-        for file in files:
-            if file in config[extra]:
+        if not isinstance(files_to_minify, list):
+            files_to_minify = [files_to_minify]
 
-                file_hash = ""
+        for i, file_path in enumerate(config[extra]):
+            if file_path not in files_to_minify:
+                continue
 
-                # When `cache_safe`, the hash is needed before the build,
-                # so it's generated from the data from the docs source file
-                if self.config["cache_safe"]:
-                    docs_file_path = f"{config['docs_dir']}/{file}".replace("\\", "/")
+            file_hash: str = ""
 
-                    with open(docs_file_path, encoding="utf8") as f:
-                        file_data = f.read()
+            # When `cache_safe`, the hash is needed before the build,
+            # so it's generated from the data from the docs source file
+            if self.config["cache_safe"]:
+                docs_file_path: str = f"{config['docs_dir']}/{file_path}".replace("\\", "/")
 
-                        if minify_flag:
-                            file_data = minify_func(file_data)
+                with open(docs_file_path, encoding="utf8") as file:
+                    file_data: str = file.read()
 
-                        # store data for use in `on_post_build`
-                        self.path_to_data[file] = file_data
+                    if minify_flag:
+                        file_data = minify_func(file_data)
 
-                    file_hash = hashlib.sha384(file_data.encode("utf8")).hexdigest()
-                    # store hash for use in `on_post_build`
-                    self.path_to_hash[file] = file_hash
+                    # store data for use in `on_post_build`
+                    self.path_to_data[file_path] = file_data
 
-                config[extra][config[extra].index(file)] = _minified_asset(
-                    minify_flag, file, file_type, file_hash
-                )
-        return config
+                file_hash = hashlib.sha384(file_data.encode("utf8")).hexdigest()
+                # store hash for use in `on_post_build`
+                self.path_to_hash[file_path] = file_hash
+
+            config[extra][i] = _minified_asset(minify_flag, file_path, file_type, file_hash)
 
     def on_post_page(self, output: str, *, page: Page, config: MkDocsConfig) -> Optional[str]:
         """Minify HTML page before saving to disk."""
@@ -154,16 +157,16 @@ class MinifyPlugin(BasePlugin):
 
         return output_content
 
-    def on_pre_build(self, config):
+    def on_pre_build(self, *, config: MkDocsConfig) -> None:
+        """Process file names of extras in the config."""
         if self.config["minify_js"] or self.config["cache_safe"]:
-            config = self._minify_extra_config("js", config)
+            self._minify_extra_config("js", config)
         if self.config["minify_css"] or self.config["cache_safe"]:
-            config = self._minify_extra_config("css", config)
-        return config
+            self._minify_extra_config("css", config)
 
-    def on_post_build(self, config):
+    def on_post_build(self, *, config: MkDocsConfig) -> None:
+        """Process extras before saving to disk."""
         if self.config["minify_js"] or self.config["cache_safe"]:
             self._minify("js", config)
         if self.config["minify_css"] or self.config["cache_safe"]:
             self._minify("css", config)
-        return config
