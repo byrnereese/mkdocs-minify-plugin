@@ -43,41 +43,27 @@ plugins:
   - Sets whether HTML files should be minified.
 - `minify_js`:
   - Defaults to `False`.
-  - Sets whether JS files should be minified.  
-    If set to `True`, you must specificy the JS to be minified files using `js_files` (see below).
+  - Sets whether JS files should be minified.<br>
+    If set to `True`, you must specify the JS to be minified files using `js_files` (see below).
 - `minify_css`:
   - Defaults to `False`.
-  - Sets whether CSS files should be minified.  
-    If set to `True`, you must specificy the CSS to be minified files using `css_files` (see below).
+  - Sets whether CSS files should be minified.<br>
+    If set to `True`, you must specify the CSS to be minified files using `css_files` (see below).
 - `htmlmin_opts`: 
   - Defaults to `None`.
   - Sets runtime htmlmin API options using the [config parameters of htmlmin](https://htmlmin.readthedocs.io/en/latest/reference.html#main-functions)
 - `cache_safe`:
   - Defaults to `False`.
-  - Sets whether a hash should be added to the JS and CSS file names.  
-    If set to `True`, you must specificy the files using `js_files` or `css_files` (see below).
-  - This setting makes sure that the users will download the up-to-date version of the files between MkDocs builds 
-    instead of loading old versions from the browser cache.
-- `js_files`: 
+  - Sets whether a hash should be added to the JS and CSS file names. This ensures that the browser always loads the latest version of the files instead of loading them from the cache.<br>
+    If set to `True`, you must specify the files using `js_files` or `css_files` (see below).
+- `js_files`:
   - Defaults to `None`.
-  - List of JS files to be minified.  
+  - List of JS files to be minified.<br>
     The plugin will generate minified versions of these files and save them as `.min.js` in the output directory.
-- `css_files`: 
+- `css_files`:
   - Defaults to `None`.
-  - List of CSS files to be minified.  
+  - List of CSS files to be minified.<br>
     The plugin will generate minified versions of these files and save them as `.min.css` in the output directory.
 
 > **Note:** When using `minify_js` or `minify_css`, you don't have to modify the `extra_javascript` or `extra_css` entries
 in your `mkdocs.yml` file. The plugins automatically takes care of that.
-
-More information about plugins in the [MkDocs documentation][mkdocs-plugins].
-
-## See Also
-
-More information about templates [here][mkdocs-template].
-
-More information about blocks [here][mkdocs-block].
-
-[mkdocs-plugins]: https://www.mkdocs.org/user-guide/plugins/
-[mkdocs-template]: https://www.mkdocs.org/user-guide/custom-themes/#template-variables
-[mkdocs-block]: https://www.mkdocs.org/user-guide/styling-your-docs/#overriding-template-blocks
