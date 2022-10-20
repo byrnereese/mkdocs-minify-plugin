@@ -1,11 +1,14 @@
 import hashlib
 import os
+from typing import Dict, Optional, Tuple, Union
 
 import csscompressor
 import htmlmin
 import jsmin
 import mkdocs.config.config_options
+from mkdocs.config.defaults import MkDocsConfig
 from mkdocs.plugins import BasePlugin
+from mkdocs.structure.pages import Page
 
 EXTRAS = {
     "js": "extra_javascript",
@@ -73,6 +76,34 @@ class MinifyPlugin(BasePlugin):
             # Rename to [.hash].min.{file_type}
             os.rename(fn, _minified_asset(minify_flag, fn, file_type, file_hash))
 
+    def _minify_html_page(self, output: str) -> Optional[str]:
+        """Minifies html page content."""
+        if not self.config["minify_html"]:
+            return output
+
+        output_opts: Dict[str, Union[bool, str, Tuple[str, ...]]] = {
+            "remove_comments": False,
+            "remove_empty_space": False,
+            "remove_all_empty_space": False,
+            "reduce_empty_attributes": True,
+            "reduce_boolean_attributes": False,
+            "remove_optional_attribute_quotes": True,
+            "convert_charrefs": True,
+            "keep_pre": False,
+            "pre_tags": ("pre", "textarea"),
+            "pre_attr": "pre",
+        }
+
+        selected_opts: Dict = self.config["htmlmin_opts"] or {}
+
+        for key in selected_opts:
+            if key in output_opts:
+                output_opts[key] = selected_opts[key]
+            else:
+                print(f"htmlmin option '{key}' not recognized")
+
+        return htmlmin.minify(output, **output_opts)
+
     def _minify_extra_config(self, file_type, config):
         """Changes extra_ entries, so they point to the minified/hashed file names."""
         files = self.config[file_type + "_files"] or []
@@ -110,44 +141,18 @@ class MinifyPlugin(BasePlugin):
                 )
         return config
 
-    def on_post_page(self, output_content, page, config):
-        if self.config["minify_html"]:
-            opts = self.config["htmlmin_opts"] or {}
-            for key in opts:
-                if key not in [
-                    "remove_comments",
-                    "remove_empty_space",
-                    "remove_all_empty_space",
-                    "reduce_boolean_attributes",
-                    "remove_optional_attribute_quotes",
-                    "convert_charrefs",
-                    "keep_pre",
-                    "pre_tags",
-                    "pre_attr",
-                ]:
-                    print("htmlmin option " + key + " not recognized")
-            return htmlmin.minify(
-                output_content,
-                opts.get("remove_comments", False),
-                opts.get("remove_empty_space", False),
-                opts.get("remove_all_empty_space", False),
-                opts.get("reduce_empty_attributes", True),
-                opts.get("reduce_boolean_attributes", False),
-                opts.get("remove_optional_attribute_quotes", True),
-                opts.get("convert_charrefs", True),
-                opts.get("keep_pre", False),
-                opts.get("pre_tags", ("pre", "textarea")),
-                opts.get("pre_attr", "pre"),
-            )
-        else:
-            return output_content
+    def on_post_page(self, output: str, *, page: Page, config: MkDocsConfig) -> Optional[str]:
+        """Minify HTML page before saving to disk."""
+        return self._minify_html_page(output)
 
-    def on_post_template(self, output_content, template_name, config):
-        # Minify HTML template files, e.g., 404.html
+    def on_post_template(
+        self, output_content: str, *, template_name: str, config: MkDocsConfig
+    ) -> Optional[str]:
+        """Minify HTML template files, e.g. 404.html, before saving to disk."""
         if template_name.endswith(".html"):
-            return self.on_post_page(output_content, {}, config)
-        else:
-            return output_content
+            return self._minify_html_page(output_content)
+
+        return output_content
 
     def on_pre_build(self, config):
         if self.config["minify_js"] or self.config["cache_safe"]:
