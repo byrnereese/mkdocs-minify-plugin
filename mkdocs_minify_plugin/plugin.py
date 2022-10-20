@@ -1,3 +1,4 @@
+import hashlib
 import os
 import sys
 import fnmatch
@@ -24,8 +25,11 @@ MINIFIERS = {
 }
 
 
-def _minified_asset(file_name, file_type):
-    return file_name.replace('.' + file_type, '.min.' + file_type)
+def _minified_asset(minify_flag, file_name, file_type, file_hash):
+    """Adds [.hash].min. text to the asset file name."""
+    hash_part: str = f".{file_hash[:6]}" if file_hash else ""
+    min_part: str = ".min" if minify_flag else ""
+    return file_name.replace(f".{file_type}", f"{hash_part}{min_part}.{file_type}")
 
 
 class MinifyPlugin(BasePlugin):
@@ -37,37 +41,78 @@ class MinifyPlugin(BasePlugin):
         ('js_files', mkdocs.config.config_options.Type((str, list), default=None)),
         ('css_files', mkdocs.config.config_options.Type((str, list), default=None)),
         ('htmlmin_opts', mkdocs.config.config_options.Type((str, dict), default=None)),
+        ('cache_safe_extras', mkdocs.config.config_options.Type(bool, default=False)),
     )
+
+    path_to_hash = {}
+    """
+    The file hash is stored in a dict, so that it's generated only once.
+    Relevant only when `on_pre_build` is run AND `cache_safe_extras` is `True`.
+    """
+
+    path_to_data = {}
+    """
+    The file data is stored in a dict, so that it's read only once.
+    Relevant only when `on_pre_build` is run AND `cache_safe_extras` is `True`.
+    """
 
     def _minify(self, file_type, config):
         minify_func = MINIFIERS[file_type]
         files = self.config[file_type + '_files'] or []
+        minify_flag = self.config[f"minify_{file_type}"]
 
         if not isinstance(files, list):
             files = [files]
         for file in files:
             # Read file and minify
-            fn = config['site_dir'] + '/' + file
-            if os.sep != '/':
-                fn = fn.replace(os.sep, '/')
+            fn = f"{config['site_dir']}/{file}".replace("\\", "/")
             with open(fn, mode="r+", encoding="utf-8") as f:
-                minified = minify_func(f.read())
-                f.seek(0)
-                f.write(minified)
+                if self.config["cache_safe_extras"]:
+                    f.write(self.path_to_data[file])
+                else:
+                    minified = minify_func(f.read())
+                    f.seek(0)
+                    f.write(minified)
                 f.truncate()
-            # Rename to .min.{file_type}
-            os.rename(fn, _minified_asset(fn, file_type))
+
+            file_hash = self.path_to_hash.get(file, "")
+
+            # Rename to [.hash].min.{file_type}
+            os.rename(fn, _minified_asset(minify_flag, fn, file_type, file_hash))
 
     def _minify_extra_config(self, file_type, config):
-        """Change extra_ entries so they point to the minified files."""
+        """Changes extra_ entries, so they point to the minified/hashed file names."""
         files = self.config[file_type + '_files'] or []
         extra = EXTRAS[file_type]
+        minify_func = MINIFIERS[file_type]
+        minify_flag = self.config[f"minify_{file_type}"]
 
         if not isinstance(files, list):
             files = [files]
         for file in files:
             if file in config[extra]:
-                config[extra][config[extra].index(file)] = _minified_asset(file, file_type)
+
+                file_hash = ""
+
+                # When `cache_safe_extras`, the hash is needed before the build,
+                # so it's generated from the data from the docs source file
+                if self.config["cache_safe_extras"]:
+                    docs_file_path = f"{config['docs_dir']}/{file}".replace("\\", "/")
+
+                    with open(docs_file_path, encoding="utf8") as f:
+                        file_data = f.read()
+
+                        if minify_flag:
+                            file_data = minify_func(file_data)
+
+                        # store data for use in `on_post_build`
+                        self.path_to_data[file] = file_data
+
+                    file_hash = hashlib.sha384(file_data.encode("utf8")).hexdigest()
+                    # store hash for use in `on_post_build`
+                    self.path_to_hash[file] = file_hash
+
+                config[extra][config[extra].index(file)] = _minified_asset(minify_flag, file, file_type, file_hash)
         return config
 
     def on_post_page(self, output_content, page, config):
@@ -88,15 +133,15 @@ class MinifyPlugin(BasePlugin):
             return output_content
 
     def on_pre_build(self, config):
-        if self.config['minify_js']:
+        if self.config['minify_js'] or self.config["cache_safe_extras"]:
             config = self._minify_extra_config('js', config)
-        if self.config['minify_css']:
+        if self.config['minify_css'] or self.config["cache_safe_extras"]:
             config = self._minify_extra_config('css', config)
         return config
 
     def on_post_build(self, config):
-        if self.config['minify_js']:
+        if self.config['minify_js'] or self.config["cache_safe_extras"]:
             self._minify('js', config)
-        if self.config['minify_css']:
+        if self.config['minify_css'] or self.config["cache_safe_extras"]:
             self._minify('css', config)
         return config
