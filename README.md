@@ -1,6 +1,6 @@
 # mkdocs-minify-plugin
 
-An MkDocs plugin to minify HTML, JS or CSS files prior to being written to disk.
+A MkDocs plugin to minify HTML, JS or CSS files prior to being written to disk.
 
 HTML minification is done using [htmlmin](https://github.com/mankyd/htmlmin).
 
@@ -15,6 +15,7 @@ Install the plugin using pip:
 `pip install mkdocs-minify-plugin`
 
 Activate the plugin in `mkdocs.yml`:
+
 ```yaml
 plugins:
   - search
@@ -37,13 +38,32 @@ plugins:
 
 ## Options
 
-- `minify_html`: Sets whether HTML files should be minified. Defaults to `false`.
-- `htmlmin_opts`: Sets runtime htmlmin API options using the [config parameters of htmlmin](https://htmlmin.readthedocs.io/en/latest/reference.html#main-functions)
-- `minify_js`: Sets whether JS files should be minified. Defaults to `false`. If set to `true`, you must specificy the JS to be minified files using `js_files` (see below).
-- `minify_css`: Sets whether CSS files should be minified. Defaults to `false`. If set to `true`, you must specificy the CSS to be minified files using `css_files` (see below).
-- `cache_safe`: Sets whether a hash should be added to the JS and CSS file names. Defaults to `false`. If set to `true`, you must specificy the files using `css_files` or `js_files` (see below).
-- `js_files`: List of JS files to be minified. The plugin will generate minified versions of these files and save them as `.min.js` in the output directory.
-- `css_files`: List of CSS files to be minified. The plugin will generate minified versions of these files and save them as `.min.css` in the output directory.
+- `minify_html`: 
+  - Defaults to `False`.
+  - Sets whether HTML files should be minified.
+- `minify_js`:
+  - Defaults to `False`.
+  - Sets whether JS files should be minified.  
+    If set to `True`, you must specificy the JS to be minified files using `js_files` (see below).
+- `minify_css`:
+  - Defaults to `False`.
+  - Sets whether CSS files should be minified.  
+    If set to `True`, you must specificy the CSS to be minified files using `css_files` (see below).
+- `htmlmin_opts`: 
+  - Defaults to `None`.
+  - Sets runtime htmlmin API options using the [config parameters of htmlmin](https://htmlmin.readthedocs.io/en/latest/reference.html#main-functions)
+- `cache_safe`:
+  - Defaults to `False`.
+  - Sets whether a hash should be added to the JS and CSS file names.  
+    If set to `True`, you must specificy the files using `js_files` or `css_files` (see below).
+- `js_files`: 
+  - Defaults to `None`.
+  - List of JS files to be minified.  
+    The plugin will generate minified versions of these files and save them as `.min.js` in the output directory.
+- `css_files`: 
+  - Defaults to `None`.
+  - List of CSS files to be minified.  
+    The plugin will generate minified versions of these files and save them as `.min.css` in the output directory.
 
 > **Note:** When using `minify_js` or `minify_css`, you don't have to modify the `extra_javascript` or `extra_css` entries
 in your `mkdocs.yml` file. The plugins automatically takes care of that.
