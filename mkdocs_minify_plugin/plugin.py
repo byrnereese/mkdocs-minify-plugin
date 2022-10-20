@@ -21,13 +21,6 @@ MINIFIERS = {
 }
 
 
-def _minified_asset(minify_flag, file_name, file_type, file_hash):
-    """Adds [.hash].min. text to the asset file name."""
-    hash_part: str = f".{file_hash[:6]}" if file_hash else ""
-    min_part: str = ".min" if minify_flag else ""
-    return file_name.replace(f".{file_type}", f"{hash_part}{min_part}.{file_type}")
-
-
 class MinifyPlugin(BasePlugin):
 
     config_scheme = (
@@ -52,11 +45,16 @@ class MinifyPlugin(BasePlugin):
     Relevant only when `on_pre_build` is run AND `cache_safe` is `True`.
     """
 
+    def _minified_asset(self, file_name: str, file_type: str, file_hash: str) -> str:
+        """Adds [.hash].min. text to the asset file name."""
+        hash_part: str = f".{file_hash[:6]}" if file_hash else ""
+        min_part: str = ".min" if self.config[f"minify_{file_type}"] else ""
+        return file_name.replace(f".{file_type}", f"{hash_part}{min_part}.{file_type}")
+
     def _minify(self, file_type: str, config: MkDocsConfig) -> None:
         """Process extras and save them to disk."""
         minify_func: Callable = MINIFIERS[file_type]
         file_paths: Union[str, List[str]] = self.config[f"{file_type}_files"] or []
-        minify_flag: bool = self.config[f"minify_{file_type}"]
 
         if not isinstance(file_paths, list):
             file_paths = [file_paths]
@@ -76,9 +74,7 @@ class MinifyPlugin(BasePlugin):
             file_hash: str = self.path_to_hash.get(file_path, "")
 
             # Rename to [.hash].min.{file_type}
-            os.rename(
-                site_file_path, _minified_asset(minify_flag, site_file_path, file_type, file_hash)
-            )
+            os.rename(site_file_path, self._minified_asset(site_file_path, file_type, file_hash))
 
     def _minify_html_page(self, output: str) -> Optional[str]:
         """Minifies html page content."""
@@ -142,7 +138,7 @@ class MinifyPlugin(BasePlugin):
                 # store hash for use in `on_post_build`
                 self.path_to_hash[file_path] = file_hash
 
-            config[extra][i] = _minified_asset(minify_flag, file_path, file_type, file_hash)
+            config[extra][i] = self._minified_asset(file_path, file_type, file_hash)
 
     def on_post_page(self, output: str, *, page: Page, config: MkDocsConfig) -> Optional[str]:
         """Minify HTML page before saving to disk."""
