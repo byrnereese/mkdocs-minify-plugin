@@ -3,7 +3,7 @@ site_name: My Docs
 plugins:
   - search
   - minify:
-      cache_safe_extras: true
+      cache_safe: true
       js_files:
         - extra_assets/js/script.js
       css_files:

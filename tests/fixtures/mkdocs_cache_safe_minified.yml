@@ -8,7 +8,7 @@ plugins:
       minify_css: true
       htmlmin_opts:
         remove_comments: true
-      cache_safe_extras: true
+      cache_safe: true
       js_files:
         - extra_assets/js/script.js
       css_files:

@@ -41,19 +41,19 @@ class MinifyPlugin(BasePlugin):
         ('js_files', mkdocs.config.config_options.Type((str, list), default=None)),
         ('css_files', mkdocs.config.config_options.Type((str, list), default=None)),
         ('htmlmin_opts', mkdocs.config.config_options.Type((str, dict), default=None)),
-        ('cache_safe_extras', mkdocs.config.config_options.Type(bool, default=False)),
+        ('cache_safe', mkdocs.config.config_options.Type(bool, default=False)),
     )
 
     path_to_hash = {}
     """
     The file hash is stored in a dict, so that it's generated only once.
-    Relevant only when `on_pre_build` is run AND `cache_safe_extras` is `True`.
+    Relevant only when `on_pre_build` is run AND `cache_safe` is `True`.
     """
 
     path_to_data = {}
     """
     The file data is stored in a dict, so that it's read only once.
-    Relevant only when `on_pre_build` is run AND `cache_safe_extras` is `True`.
+    Relevant only when `on_pre_build` is run AND `cache_safe` is `True`.
     """
 
     def _minify(self, file_type, config):
@@ -67,7 +67,7 @@ class MinifyPlugin(BasePlugin):
             # Read file and minify
             fn = f"{config['site_dir']}/{file}".replace("\\", "/")
             with open(fn, mode="r+", encoding="utf-8") as f:
-                if self.config["cache_safe_extras"]:
+                if self.config["cache_safe"]:
                     f.write(self.path_to_data[file])
                 else:
                     minified = minify_func(f.read())
@@ -94,9 +94,9 @@ class MinifyPlugin(BasePlugin):
 
                 file_hash = ""
 
-                # When `cache_safe_extras`, the hash is needed before the build,
+                # When `cache_safe`, the hash is needed before the build,
                 # so it's generated from the data from the docs source file
-                if self.config["cache_safe_extras"]:
+                if self.config["cache_safe"]:
                     docs_file_path = f"{config['docs_dir']}/{file}".replace("\\", "/")
 
                     with open(docs_file_path, encoding="utf8") as f:
@@ -133,15 +133,15 @@ class MinifyPlugin(BasePlugin):
             return output_content
 
     def on_pre_build(self, config):
-        if self.config['minify_js'] or self.config["cache_safe_extras"]:
+        if self.config['minify_js'] or self.config["cache_safe"]:
             config = self._minify_extra_config('js', config)
-        if self.config['minify_css'] or self.config["cache_safe_extras"]:
+        if self.config['minify_css'] or self.config["cache_safe"]:
             config = self._minify_extra_config('css', config)
         return config
 
     def on_post_build(self, config):
-        if self.config['minify_js'] or self.config["cache_safe_extras"]:
+        if self.config['minify_js'] or self.config["cache_safe"]:
             self._minify('js', config)
-        if self.config['minify_css'] or self.config["cache_safe_extras"]:
+        if self.config['minify_css'] or self.config["cache_safe"]:
             self._minify('css', config)
         return config
