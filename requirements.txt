@@ -1,4 +1,4 @@
-mkdocs>=1.0.4
-htmlmin>=0.1.4
-jsmin>=3.0.0
+mkdocs>=1.4.1
+htmlmin>=0.1.12
+jsmin>=3.0.1
 csscompressor>=0.9.5
