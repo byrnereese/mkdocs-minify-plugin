@@ -2,9 +2,9 @@
 Pytest test file for the `mkdocs_minify_plugin` module.
 """
 import hashlib
-from distutils.dir_util import copy_tree
+import shutil
+import subprocess
 from pathlib import Path
-from subprocess import check_call
 
 import pytest
 
@@ -12,19 +12,15 @@ import pytest
 
 
 @pytest.fixture
-def extra_dir(tmp_path):
+def extra_dir(tmp_path: Path):
     """Fixture that provides the path to the extra_assets directory after build"""
     return tmp_path / "site" / "extra_assets"
 
 
 @pytest.fixture
-def mkdocs_build(tmp_path):
+def mkdocs_build(tmp_path: Path):
     """Fixture that builds mkDocs based on the `mkdocs.yml` file"""
-    fixture_dir = str(Path(__file__).parent / "fixtures")
-    temp_dir = str(tmp_path)
-
-    copy_tree(fixture_dir, temp_dir)
-    return check_call(["mkdocs", "build", "-f", f"{temp_dir}/mkdocs.yml"])
+    return _build_fixture_base(tmp_path, file_name="mkdocs.yml")
 
 
 @pytest.fixture
@@ -50,27 +46,13 @@ def _build_fixture_base(tmp_path: Path, *, file_name: str) -> int:
     fixture_dir: str = str(Path(__file__).parent / "fixtures")
     temp_dir: str = str(tmp_path)
 
-    copy_tree(fixture_dir, temp_dir)
-    return check_call(["mkdocs", "build", "-f", Path(temp_dir) / file_name])
+    shutil.copytree(fixture_dir, temp_dir, dirs_exist_ok=True)
+    return subprocess.check_call(["mkdocs", "build", "-f", Path(temp_dir) / file_name])
 
 
 # endregion
 
 # region tests
-
-
-def test_css_is_minified(mkdocs_build, extra_dir):
-    with open(extra_dir / "css" / "style.min.css", "r") as f:
-        minified = f.read()
-
-    assert minified == r".ui-hidden{display:none}"
-
-
-def test_js_is_minifed(mkdocs_build, extra_dir):
-    with open(extra_dir / "js" / "script.min.js", "r") as f:
-        minifed = f.read()
-
-    assert minifed == r"console.log('Hello World');"
 
 
 def test_build_no_extras(mkdocs_build: int, extra_dir: Path, tmp_path: Path) -> None:
