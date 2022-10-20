@@ -1,3 +1,6 @@
+"""
+A MkDocs plugin to minify HTML, JS or CSS files prior to being written to disk
+"""
 import hashlib
 import os
 from typing import Callable, Dict, List, Optional, Tuple, Union
@@ -10,20 +13,21 @@ from mkdocs.config.defaults import MkDocsConfig
 from mkdocs.plugins import BasePlugin
 from mkdocs.structure.pages import Page
 
-EXTRAS = {
+EXTRAS: Dict[str, str] = {
     "js": "extra_javascript",
     "css": "extra_css",
 }
 
-MINIFIERS = {
+MINIFIERS: Dict[str, Callable] = {
     "js": jsmin.jsmin,
     "css": csscompressor.compress,
 }
 
 
 class MinifyPlugin(BasePlugin):
+    """Custom minify plugin class"""
 
-    config_scheme = (
+    config_scheme: Tuple = (
         ("minify_html", mkdocs.config.config_options.Type(bool, default=False)),
         ("minify_js", mkdocs.config.config_options.Type(bool, default=False)),
         ("minify_css", mkdocs.config.config_options.Type(bool, default=False)),
@@ -33,20 +37,20 @@ class MinifyPlugin(BasePlugin):
         ("cache_safe", mkdocs.config.config_options.Type(bool, default=False)),
     )
 
-    path_to_hash = {}
+    path_to_hash: Dict[str, str] = {}
     """
     The file hash is stored in a dict, so that it's generated only once.
     Relevant only when `on_pre_build` is run AND `cache_safe` is `True`.
     """
 
-    path_to_data = {}
+    path_to_data: Dict[str, str] = {}
     """
     The file data is stored in a dict, so that it's read only once.
     Relevant only when `on_pre_build` is run AND `cache_safe` is `True`.
     """
 
     def _minified_asset(self, file_name: str, file_type: str, file_hash: str) -> str:
-        """Adds [.hash].min. text to the asset file name."""
+        """Add [.hash].min. text to the asset file name."""
         hash_part: str = f".{file_hash[:6]}" if file_hash else ""
         min_part: str = ".min" if self.config[f"minify_{file_type}"] else ""
         return file_name.replace(f".{file_type}", f"{hash_part}{min_part}.{file_type}")
@@ -77,7 +81,7 @@ class MinifyPlugin(BasePlugin):
             os.rename(site_file_path, self._minified_asset(site_file_path, file_type, file_hash))
 
     def _minify_html_page(self, output: str) -> Optional[str]:
-        """Minifies html page content."""
+        """Minify HTML page content."""
         if not self.config["minify_html"]:
             return output
 
