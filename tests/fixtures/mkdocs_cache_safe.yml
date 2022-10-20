@@ -1,0 +1,16 @@
+site_name: My Docs
+
+plugins:
+  - search
+  - minify:
+      cache_safe_extras: true
+      js_files:
+        - extra_assets/js/script.js
+      css_files:
+        - extra_assets/css/style.css
+
+extra_javascript:
+  - extra_assets/js/script.js
+
+extra_css:
+  - extra_assets/css/style.css
