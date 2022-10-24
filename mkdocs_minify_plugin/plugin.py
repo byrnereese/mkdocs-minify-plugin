@@ -4,6 +4,7 @@ An MkDocs plugin to minify HTML, JS or CSS files prior to being written to disk
 import hashlib
 import os
 from typing import Callable, Dict, List, Optional, Tuple, Union
+from packaging import version
 
 import csscompressor
 import htmlmin
@@ -23,6 +24,23 @@ MINIFIERS: Dict[str, Callable] = {
     "css": csscompressor.compress,
 }
 
+if version.parse(csscompressor.__version__) <= version.parse("0.9.5"):
+    # Monkey patch csscompressor 0.9.5
+    # See https://github.com/sprymix/csscompressor/issues/9#issuecomment-1024417374
+    _preserve_call_tokens_original = csscompressor._preserve_call_tokens
+    _url_re = csscompressor._url_re
+
+    def my_new_preserve_call_tokens(*args, **kwargs):
+        """If regex is for url pattern, switch the keyword remove_ws to False
+        Such configuration will preserve svg code in url() pattern of CSS file.
+        """
+        if _url_re == args[1]:
+            kwargs["remove_ws"] = False
+        return _preserve_call_tokens_original(*args, **kwargs)
+
+    csscompressor._preserve_call_tokens = my_new_preserve_call_tokens
+
+    assert csscompressor._preserve_call_tokens == my_new_preserve_call_tokens
 
 class MinifyPlugin(BasePlugin):
     """Custom minify plugin class"""
