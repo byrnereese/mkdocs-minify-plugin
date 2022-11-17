@@ -12,14 +12,20 @@ jobs:
   test:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python
-        uses: actions/setup-python@v2
+      - uses: actions/checkout@v3
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+          cache-dependency-path: "requirements.txt"
+
       - name: Install dependencies
         run: |
-          pip install -r tests/requirements.txt
-          pip install -e .
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade -r requirements.txt
+          python -m pip install pip install -e .
+          
       - name: Run tests
         run: pytest -v
