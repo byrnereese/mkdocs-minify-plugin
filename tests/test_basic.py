@@ -5,6 +5,7 @@ import hashlib
 import shutil
 import subprocess
 from pathlib import Path
+from distutils.dir_util import copy_tree
 
 import pytest
 
@@ -46,7 +47,7 @@ def _build_fixture_base(tmp_path: Path, *, file_name: str) -> int:
     fixture_dir: str = str(Path(__file__).parent / "fixtures")
     temp_dir: str = str(tmp_path)
 
-    shutil.copytree(fixture_dir, temp_dir, dirs_exist_ok=True)
+    copy_tree(fixture_dir, temp_dir)
     return subprocess.check_call(["mkdocs", "build", "-f", Path(temp_dir) / file_name])
 
 
