@@ -151,7 +151,10 @@ class MinifyPlugin(BasePlugin):
                     file_data: str = file.read()
 
                     if minify_flag:
-                        file_data = minify_func(file_data)
+                        if minify_func.__name__ == "jsmin":
+                            file_data = minify_func(file_data, quote_chars="'\"`")
+                        else:
+                            file_data = minify_func(file_data)
 
                     # store data for use in `on_post_build`
                     self.path_to_data[file_path] = file_data
