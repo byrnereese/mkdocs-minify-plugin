@@ -1,5 +1,7 @@
 # mkdocs-minify-plugin
 
+[![PyPI - Python Version][python-image]][pypi-link]
+
 An MkDocs plugin to minify HTML, JS or CSS files prior to being written to disk.
 
 HTML minification is done using [htmlmin](https://github.com/mankyd/htmlmin).
@@ -12,7 +14,9 @@ CSS minification is done using [csscompressor](https://github.com/sprymix/csscom
 
 Install the plugin using pip:
 
-`pip install mkdocs-minify-plugin`
+```bash
+pip install mkdocs-minify-plugin
+```
 
 Activate the plugin in `mkdocs.yml`:
 
@@ -67,3 +71,6 @@ plugins:
 
 > **Note:** When using `minify_js` or `minify_css`, you don't have to modify the `extra_javascript` or `extra_css` entries
 in your `mkdocs.yml` file. The plugins automatically takes care of that.
+
+[pypi-link]: https://pypi.python.org/pypi/mkdocs-minify-plugin/
+[python-image]: https://img.shields.io/pypi/pyversions/mkdocs-minify-plugin?logo=python&logoColor=aaaaaa&labelColor=333333
