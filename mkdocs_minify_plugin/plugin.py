@@ -42,6 +42,7 @@ if version.parse(csscompressor.__version__) <= version.parse("0.9.5"):
 
     assert csscompressor._preserve_call_tokens == my_new_preserve_call_tokens
 
+
 class MinifyPlugin(BasePlugin):
     """Custom minify plugin class"""
 
@@ -143,9 +144,18 @@ class MinifyPlugin(BasePlugin):
             file_hash: str = ""
 
             # When `cache_safe`, the hash is needed before the build,
-            # so it's generated from the data from the docs source file
+            # so it's generated from the data from the source file.
+            # A valid path in a custom_dir takes priority.
             if self.config["cache_safe"]:
                 docs_file_path: str = f"{config['docs_dir']}/{file_path}".replace("\\", "/")
+
+                for user_config in config.user_configs:
+                    user_config: Dict
+                    custom_dir: str = user_config.get("theme", {}).get("custom_dir", "")
+                    temp_path: str = f"{custom_dir}/{file_path}".replace("\\", "/")
+                    if custom_dir and os.path.exists(temp_path):
+                        docs_file_path = temp_path
+                        break
 
                 with open(docs_file_path, encoding="utf8") as file:
                     file_data: str = file.read()
