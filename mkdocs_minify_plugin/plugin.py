@@ -4,7 +4,6 @@ An MkDocs plugin to minify HTML, JS or CSS files prior to being written to disk
 import hashlib
 import os
 from typing import Callable, Dict, List, Optional, Tuple, Union
-from packaging import version
 
 import csscompressor
 import htmlmin
@@ -13,6 +12,7 @@ import mkdocs.config.config_options
 from mkdocs.config.defaults import MkDocsConfig
 from mkdocs.plugins import BasePlugin
 from mkdocs.structure.pages import Page
+from packaging import version
 
 EXTRAS: Dict[str, str] = {
     "js": "extra_javascript",
@@ -41,6 +41,7 @@ if version.parse(csscompressor.__version__) <= version.parse("0.9.5"):
     csscompressor._preserve_call_tokens = my_new_preserve_call_tokens
 
     assert csscompressor._preserve_call_tokens == my_new_preserve_call_tokens
+
 
 class MinifyPlugin(BasePlugin):
     """Custom minify plugin class"""
@@ -88,7 +89,7 @@ class MinifyPlugin(BasePlugin):
                 if self.config["cache_safe"]:
                     file.write(self.path_to_data[file_path])
                 else:
-                    minified: str = minify_func(file.read())
+                    minified: str = self._minify_file_data_with_func(file.read(), minify_func)
                     file.seek(0)
                     file.write(minified)
                 file.truncate()
@@ -97,6 +98,14 @@ class MinifyPlugin(BasePlugin):
 
             # Rename to [.hash].min.{file_type}
             os.rename(site_file_path, self._minified_asset(site_file_path, file_type, file_hash))
+
+    @staticmethod
+    def _minify_file_data_with_func(file_data: str, minify_func: Callable) -> str:
+        """Use the minify_func and return the minified data"""
+        if minify_func.__name__ == "jsmin":
+            return minify_func(file_data, quote_chars="'\"`")
+        else:
+            return minify_func(file_data)
 
     def _minify_html_page(self, output: str) -> Optional[str]:
         """Minify HTML page content."""
@@ -143,18 +152,24 @@ class MinifyPlugin(BasePlugin):
             file_hash: str = ""
 
             # When `cache_safe`, the hash is needed before the build,
-            # so it's generated from the data from the docs source file
+            # so it's generated from the data from the source file.
+            # A valid path in a custom_dir takes priority.
             if self.config["cache_safe"]:
                 docs_file_path: str = f"{config['docs_dir']}/{file_path}".replace("\\", "/")
+
+                for user_config in config.user_configs:
+                    user_config: Dict
+                    custom_dir: str = user_config.get("theme", {}).get("custom_dir", "")
+                    temp_path: str = f"{custom_dir}/{file_path}".replace("\\", "/")
+                    if custom_dir and os.path.exists(temp_path):
+                        docs_file_path = temp_path
+                        break
 
                 with open(docs_file_path, encoding="utf8") as file:
                     file_data: str = file.read()
 
                     if minify_flag:
-                        if minify_func.__name__ == "jsmin":
-                            file_data = minify_func(file_data, quote_chars="'\"`")
-                        else:
-                            file_data = minify_func(file_data)
+                        file_data = self._minify_file_data_with_func(file_data, minify_func)
 
                     # store data for use in `on_post_build`
                     self.path_to_data[file_path] = file_data
