@@ -13,7 +13,7 @@ setup(
     python_requires=">=3.7",
     install_requires=[
         "mkdocs>=1.4.1",
-        "htmlmin>=0.1.12",
+        "htmlmin @ git+https://github.com/wilhelmer/htmlmin.git@master",
         "jsmin>=3.0.1",
         "csscompressor>=0.9.5",
     ],
