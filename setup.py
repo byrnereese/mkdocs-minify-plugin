@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="mkdocs-minify-plugin",
-    version="0.6.4",
+    version="0.7.0",
     description="An MkDocs plugin to minify HTML, JS or CSS files prior to being written to disk",
     long_description="",
     keywords="mkdocs minify publishing documentation html css",
