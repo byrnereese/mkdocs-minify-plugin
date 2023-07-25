@@ -145,7 +145,9 @@ class MinifyPlugin(BasePlugin):
         if not isinstance(files_to_minify, list):
             files_to_minify = [files_to_minify]
 
-        for i, file_path in enumerate(config[extra]):
+        for i, extra_item in enumerate(config[extra]):
+            file_path = str(extra_item)
+
             if file_path not in files_to_minify:
                 continue
 
@@ -178,7 +180,11 @@ class MinifyPlugin(BasePlugin):
                 # store hash for use in `on_post_build`
                 self.path_to_hash[file_path] = file_hash
 
-            config[extra][i] = self._minified_asset(file_path, file_type, file_hash)
+            new_file_path = self._minified_asset(file_path, file_type, file_hash)
+            if isinstance(extra_item, str):
+                config[extra][i] = new_file_path
+            else:  # MkDocs 1.5: ExtraScriptValue.path
+                extra_item.path = new_file_path
 
     def on_post_page(self, output: str, *, page: Page, config: MkDocsConfig) -> Optional[str]:
         """Minify HTML page before saving to disk."""
