@@ -158,14 +158,21 @@ class MinifyPlugin(BasePlugin):
             # A valid path in a custom_dir takes priority.
             if self.config["cache_safe"]:
                 docs_file_path: str = f"{config['docs_dir']}/{file_path}".replace("\\", "/")
+                theme = config.theme
 
-                for user_config in config.user_configs:
-                    user_config: Dict
-                    custom_dir: str = user_config.get("theme", {}).get("custom_dir", "")
-                    temp_path: str = f"{custom_dir}/{file_path}".replace("\\", "/")
-                    if custom_dir and os.path.exists(temp_path):
+                # Since MkDocs 1.5.0, theme.custom_dir is available for direct access
+                if not hasattr(theme, "custom_dir"):
+                    for user_config in config.user_configs:
+                        user_config: Dict
+                        custom_dir: str = user_config.get("theme", {}).get("custom_dir", "")
+                        temp_path: str = f"{custom_dir}/{file_path}".replace("\\", "/")
+                        if custom_dir and os.path.exists(temp_path):
+                            docs_file_path = temp_path
+                            break
+                elif theme.custom_dir:
+                    temp_path: str = f"{theme.custom_dir}/{file_path}".replace("\\", "/")
+                    if os.path.exists(temp_path):
                         docs_file_path = temp_path
-                        break
 
                 with open(docs_file_path, encoding="utf8") as file:
                     file_data: str = file.read()
