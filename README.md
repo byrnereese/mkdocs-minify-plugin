@@ -4,7 +4,7 @@
 
 An MkDocs plugin to minify HTML, JS or CSS files prior to being written to disk.
 
-HTML minification is done using [htmlmin](https://github.com/mankyd/htmlmin).
+HTML minification is done using [htmlmin2](https://github.com/wilhelmer/htmlmin).
 
 JS minification is done using [jsmin](https://github.com/tikitu/jsmin/).
 
@@ -42,7 +42,7 @@ plugins:
 
 ## Options
 
-- `minify_html`: 
+- `minify_html`:
   - Defaults to `False`.
   - Sets whether HTML files should be minified.
 - `minify_js`:
@@ -53,7 +53,7 @@ plugins:
   - Defaults to `False`.
   - Sets whether CSS files should be minified.<br>
     If set to `True`, you must specify the CSS to be minified files using `css_files` (see below).
-- `htmlmin_opts`: 
+- `htmlmin_opts`:
   - Defaults to `None`.
   - Sets runtime htmlmin API options using the [config parameters of htmlmin](https://htmlmin.readthedocs.io/en/latest/reference.html#main-functions)
 - `cache_safe`:
