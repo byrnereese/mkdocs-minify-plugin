@@ -1,10 +1,16 @@
 from setuptools import find_packages, setup
+from pathlib import Path
+
+# read contents of README.md to include it in package metadata
+readme_file = Path(__file__).parent / "README.md"
+long_description = readme_file.read_text("utf-8")
 
 setup(
     name="mkdocs-minify-plugin",
     version="0.7.1",
     description="An MkDocs plugin to minify HTML, JS or CSS files prior to being written to disk",
-    long_description="",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     keywords="mkdocs minify publishing documentation html css",
     url="https://github.com/byrnereese/mkdocs-minify-plugin",
     author="Byrne Reese, Lars Wilhelmer",
