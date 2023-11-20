@@ -16,7 +16,7 @@ setup(
     author="Byrne Reese, Lars Wilhelmer",
     author_email="byrne@majordojo.com",
     license="MIT",
-    python_requires=">=3.7",
+    python_requires=">=3.8",
     install_requires=[
         "mkdocs>=1.4.1",
         "htmlmin2>=0.1.13",
@@ -30,7 +30,6 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3 :: Only",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
