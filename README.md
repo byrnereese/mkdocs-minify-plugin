@@ -71,6 +71,7 @@ plugins:
 
 > **Note:** When using `minify_js` or `minify_css`, you don't have to modify the `extra_javascript` or `extra_css` entries
 in your `mkdocs.yml` file. The plugins automatically takes care of that.
+Both `minify_js` and `minify_css` support the use of **globs** (e.g. `**/*.css`).
 
 [pypi-link]: https://pypi.python.org/pypi/mkdocs-minify-plugin/
 [python-image]: https://img.shields.io/pypi/pyversions/mkdocs-minify-plugin?logo=python&logoColor=aaaaaa&labelColor=333333
