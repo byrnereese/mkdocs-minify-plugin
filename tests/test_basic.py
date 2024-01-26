@@ -62,11 +62,11 @@ def test_build_no_extras(mkdocs_build: int, extra_dir: Path, tmp_path: Path) -> 
     _assert_minified_js(extra_dir / "js" / "script.min.js")
     _assert_minified_template_no_extras(
         file_path=tmp_path / "site" / "index.html",
-        file_hash="544b92316ee6219418120cfc0347f6f1b996f93833287777345da06a38f5f05e374d87a1a35e6bee96508169262d8f97",
+        file_hash="468e45e1d823325ceebfd1c3eaa6e390c9629b43eaefcbdf5ff5d3c77cb358e10737d19d44ab0ad17f66a9935800c135",
     )
     _assert_minified_template_no_extras(
         file_path=tmp_path / "site" / "404.html",
-        file_hash="91b1fdfb1b0eb78a20992da953b22f4a72b86336bcf7845cd976b5e4a84337b1bdedab7a09f869d9cab80fcb3bd872dc",
+        file_hash="f8ab14b0fc7865c4eabaa9a4ce0c5db191e7b1fb6ca28e450d070847eb3519d2e6cf64c65607245bdc8f414007014c92",
     )
 
 
@@ -76,11 +76,11 @@ def test_build_with_extras(mkdocs_build_with_extras: int, extra_dir: Path, tmp_p
     _assert_minified_js(extra_dir / "js" / "script.min.js")
     _assert_template_with_extras(
         file_path=tmp_path / "site" / "index.html",
-        file_hash="c102275d47fb49aeda0c2e35c35daf5da1ef5ce96f5360cf329578dc65e70b53249b20017b77bcc2516f672917d75762",
+        file_hash="b164f41214bc362faf6a43c57be6c783a276ae188450b9f91ba27d4ffd581426e7e7902c9ce1dc93279f4b0badb92ec1",
     )
     _assert_template_with_extras(
         file_path=tmp_path / "site" / "404.html",
-        file_hash="e4d3e614fa3a73e6c0b4231d443009a2bfa3fcbd5f548b19b58222d04fcd4c5dadf702904952b7ea3f1cc124d3904c77",
+        file_hash="e2dc0e1cc11452d4d1ec5b22a626a36d134b253e7ac8201b57c88b600a0011e262e9c50bd7a57f1b56dfd3eab08b14cf",
     )
 
 
@@ -109,7 +109,7 @@ def test_build_cache_safe(mkdocs_build_cache_safe: int, extra_dir: Path, tmp_pat
         file_path=tmp_path / "site" / "index.html",
         css_prefix=css_hash_prefix,
         js_prefix=js_hash_prefix,
-        file_hash="315459f1b231791738d6a2be955a469a06a94b9135a776c42cc03250b1b1f3cf9ac0232d9ae34ff7709bf37fa64af558",
+        file_hash="6ae88614660e302573660221fce668fc9cdbadb8fccf1cb1ec4a912d09518d3755773b3d398dbdef97fa9be2bcc6e322",
         minified_extras=False,
         minified_html=False,
     )
@@ -117,7 +117,7 @@ def test_build_cache_safe(mkdocs_build_cache_safe: int, extra_dir: Path, tmp_pat
         file_path=tmp_path / "site" / "404.html",
         css_prefix=css_hash_prefix,
         js_prefix=js_hash_prefix,
-        file_hash="10e73a27d3d134aff777399fb8cb2c044d1108f2b91457b7a84026c9afd23e16719eca9f922f977c33f34dcb69017227",
+        file_hash="735db5fb6dcfd9bcc09eb287c6303e8c88d7ce8db71d59c1dbb02e837a83836395b508bfbac43652d530f781761e40fc",
         minified_extras=False,
         minified_html=False,
     )
@@ -136,13 +136,13 @@ def test_build_cache_safe_minified(
         file_path=tmp_path / "site" / "index.html",
         css_prefix=css_hash_prefix,
         js_prefix=js_hash_prefix,
-        file_hash="4e4abcfcf21f0220799141c9aa67500ff95ade5725351f7f2980a3484dc285c222864b6065bb6ed8d91343e7c0398357",
+        file_hash="24ebe25956981b302e11251dd82cd1b58087195a2f5fe2fec57534705a66fbabba233a367f6d1431ce28bd4f6d8c5f85",
     )
     _assert_template_with_extras(
         file_path=tmp_path / "site" / "404.html",
         css_prefix=css_hash_prefix,
         js_prefix=js_hash_prefix,
-        file_hash="ba1971d561cbd38ece2bb7f45aff9fadf7fe7b766bcd71341af3b99b7109c5c3dc9930c37ea69f05f3c841fc698147b6",
+        file_hash="76f4c03cd62fb3a2af689cddbb1ff1cb32bee269c329c819df462c203e4f74d88adbd227e582ee7305f8b26a226a9187",
     )
 
 
