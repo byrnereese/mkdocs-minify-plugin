@@ -2,6 +2,7 @@
 An MkDocs plugin to minify HTML, JS or CSS files prior to being written to disk
 """
 import hashlib
+from pathlib import Path
 import os
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
@@ -82,19 +83,37 @@ class MinifyPlugin(BasePlugin):
         if not isinstance(file_paths, list):
             file_paths = [file_paths]
 
-        for file_path in file_paths:
-            site_file_path: str = f"{config['site_dir']}/{file_path}".replace("\\", "/")
+        site_dir = Path(config['site_dir'])
+
+        file_paths2 = []
+        for file_path in file_paths.copy():
+            if "*" in file_path:
+                glob_parts = file_path.split("*", maxsplit=1)
+                glob_dir = site_dir / Path(glob_parts[0])
+                file_path = glob_dir.glob(f"*{glob_parts[1]}")
+
+                for glob_file in file_path:
+                    file_paths2.append(glob_file)
+            else:
+                file_paths2.append(site_dir / file_path)
+
+        # remove duplicates
+        file_paths2 = list(set(file_paths2))
+
+        for file_path in file_paths2:
+            site_file_path: str = str(file_path.as_posix())
+            rel_file_path: str = site_file_path.replace(site_dir.as_posix(), "").strip("/")
 
             with open(site_file_path, mode="r+", encoding="utf8") as file:
                 if self.config["cache_safe"]:
-                    file.write(self.path_to_data[file_path])
+                    file.write(self.path_to_data[rel_file_path])
                 else:
                     minified: str = self._minify_file_data_with_func(file.read(), minify_func)
                     file.seek(0)
                     file.write(minified)
                 file.truncate()
 
-            file_hash: str = self.path_to_hash.get(file_path, "")
+            file_hash: str = self.path_to_hash.get(rel_file_path, "")
 
             # Rename to [.hash].min.{file_type}
             os.rename(site_file_path, self._minified_asset(site_file_path, file_type, file_hash))
