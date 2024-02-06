@@ -5,6 +5,7 @@ import hashlib
 from pathlib import Path
 import os
 from typing import Callable, Dict, List, Optional, Tuple, Union
+from glob import glob
 
 import csscompressor
 import htmlmin
@@ -90,7 +91,10 @@ class MinifyPlugin(BasePlugin):
             if "*" in file_path:
                 glob_parts = file_path.split("*", maxsplit=1)
                 glob_dir = site_dir / Path(glob_parts[0])
-                file_path = glob_dir.glob(f"*{glob_parts[1]}")
+                file_path = [
+                    Path(file)
+                    for file in glob(str(f"{glob_dir}/*{glob_parts[1]}"), recursive=True)
+                ]
 
                 for glob_file in file_path:
                     file_paths2.append(glob_file)
