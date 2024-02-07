@@ -6,15 +6,18 @@ from pathlib import Path
 import os
 from typing import Callable, Dict, List, Optional, Tuple, Union
 from glob import glob
+import logging
 
 import csscompressor
-import htmlmin
+import minify  # tdewolff-minify
 import jsmin
 import mkdocs.config.config_options
 from mkdocs.config.defaults import MkDocsConfig
 from mkdocs.plugins import BasePlugin
 from mkdocs.structure.pages import Page
 from packaging import version
+
+log = logging.getLogger("mkdocs_minify_plugin")
 
 EXTRAS: Dict[str, str] = {
     "js": "extra_javascript",
@@ -45,6 +48,27 @@ if version.parse(csscompressor.__version__) <= version.parse("0.9.5"):
     assert csscompressor._preserve_call_tokens == my_new_preserve_call_tokens
 
 
+# default config option values
+DEFAULT_MINIFY_CONFIG = {
+    'css-precision': 0,
+    'html-keep-comments': False,
+    'html-keep-conditional-comments': False,
+    'html-keep-default-attr-vals': False,
+    'html-keep-document-tags': False,
+    'html-keep-end-tags': False,
+    'html-keep-whitespace': False,
+    'html-keep-quotes': False,
+    'js-precision': 0,
+    'js-keep-var-names': False,
+    'js-version': 0,
+    'json-precision': 0,
+    'json-keep-numbers': False,
+    'svg-keep-comments': False,
+    'svg-precision': 0,
+    'xml-keep-whitespace': False,
+}
+
+
 class MinifyPlugin(BasePlugin):
     """Custom minify plugin class"""
 
@@ -54,7 +78,7 @@ class MinifyPlugin(BasePlugin):
         ("minify_css", mkdocs.config.config_options.Type(bool, default=False)),
         ("js_files", mkdocs.config.config_options.Type((str, list), default=None)),
         ("css_files", mkdocs.config.config_options.Type((str, list), default=None)),
-        ("htmlmin_opts", mkdocs.config.config_options.Type((str, dict), default=None)),
+        ("minify_opts", mkdocs.config.config_options.Type((str, dict), default=None)),
         ("cache_safe", mkdocs.config.config_options.Type(bool, default=False)),
     )
 
@@ -135,28 +159,7 @@ class MinifyPlugin(BasePlugin):
         if not self.config["minify_html"]:
             return output
 
-        output_opts: Dict[str, Union[bool, str, Tuple[str, ...]]] = {
-            "remove_comments": False,
-            "remove_empty_space": False,
-            "remove_all_empty_space": False,
-            "reduce_empty_attributes": True,
-            "reduce_boolean_attributes": False,
-            "remove_optional_attribute_quotes": True,
-            "convert_charrefs": True,
-            "keep_pre": False,
-            "pre_tags": ("pre", "textarea"),
-            "pre_attr": "pre",
-        }
-
-        selected_opts: Dict = self.config["htmlmin_opts"] or {}
-
-        for key in selected_opts:
-            if key in output_opts:
-                output_opts[key] = selected_opts[key]
-            else:
-                print(f"htmlmin option '{key}' not recognized")
-
-        return htmlmin.minify(output, **output_opts)
+        return minify.string("text/html", output)
 
     def _minify_extra_config(self, file_type: str, config: MkDocsConfig) -> None:
         """Change extra_ entries, so they point to the minified/hashed file names."""
@@ -231,6 +234,16 @@ class MinifyPlugin(BasePlugin):
 
     def on_pre_build(self, *, config: MkDocsConfig) -> None:
         """Process file names of extras in the config."""
+        # configure minify here to only do it once for every page
+        selected_opts: Dict = self.config["minify_opts"] or {}
+        minify_config = DEFAULT_MINIFY_CONFIG
+        for key in selected_opts:
+            if key in minify_config:
+                minify_config[key] = selected_opts[key]
+            else:
+                log.warning(f"minify option '{key}' not recognized")
+        minify.config(minify_config)
+
         if self.config["minify_js"] or self.config["cache_safe"]:
             self._minify_extra_config("js", config)
         if self.config["minify_css"] or self.config["cache_safe"]:

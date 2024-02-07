@@ -19,7 +19,7 @@ setup(
     python_requires=">=3.8",
     install_requires=[
         "mkdocs>=1.4.1",
-        "htmlmin2>=0.1.13",
+        "tdewolff-minify>=2.20.16",
         "jsmin>=3.0.1",
         "csscompressor>=0.9.5",
     ],
